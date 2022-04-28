@@ -1,6 +1,11 @@
+"""
+This script will take the ugly raw data from the two SQL datasets and put them in one easy to use SQL database
+called xrf_data.db with the tables xrf_980 and xrf_981 containing the two different datasets with Si/Sr ratios, Zr/Sr
+ratios, ages relative to LR04 dataset, depth in metres composite depth, and the filename for data-search later.
+"""
+
 import pandas as pd
 import sqlite3
-import matplotlib.pyplot as plt
 
 # connect to the SQL databases containing the XRF data
 connection_980 = sqlite3.connect("data/980_data.db")
@@ -26,14 +31,22 @@ xrf_981["Si_Sr"] = xrf_981["Si_Area "]/xrf_981["Sr_Area "]
 xrf_980 = xrf_980.rename(columns={"age(ka)_lr04": "age_ka"})
 xrf_981 = xrf_981.rename(columns={"age(ka)_lr04": "age_ka"})
 
-# plot the results
-fig, ax = plt.subplots()
+# create new dataframes
+new_980 = xrf_980[["age_ka", "Si_Sr", "Zr_Sr", "mcd", "FileName"]]
+new_981 = xrf_981[["age_ka", "Si_Sr", "Zr_Sr", "mcd", "FileName"]]
 
-ax.plot(xrf_980.age_ka, xrf_980.Zr_Sr, 'r')
-ax.plot(xrf_981.age_ka, xrf_981.Zr_Sr, 'b')
+# Opens an SQL database and puts the data into it - this will speed up future access
+conn = sqlite3.connect('data/xrf_data.db')
+c = conn.cursor()
+# c.execute("DROP TABLE xrf")
+c.execute("CREATE TABLE IF NOT EXISTS xrf_980 (Depth number)")
+c.execute("CREATE TABLE IF NOT EXISTS xrf_981 (Depth number)")
+conn.commit()
 
-ax.set_xlim([0, 2250])
+new_980.to_sql('xrf_980', conn, if_exists='replace')
+new_981.to_sql('xrf_981', conn, if_exists='replace')
 
-plt.show()
+conn.commit()
 
+conn.close()
 
