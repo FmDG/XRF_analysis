@@ -43,9 +43,15 @@ c.execute("CREATE TABLE IF NOT EXISTS xrf_980 (Depth number)")
 c.execute("CREATE TABLE IF NOT EXISTS xrf_981 (Depth number)")
 conn.commit()
 
+# Generates ID column which contains the ID from the filename
+new_980["id"] = (new_980.FileName.str.split(pat="\\", n=5)).apply(pd.Series)[4]
+new_980["id"] = (new_980.FileName.str.split(pat="\\", n=5)).apply(pd.Series)[4]
+
+# Writes the new dataframes to the database
 new_980.to_sql('xrf_980', conn, if_exists='replace')
 new_981.to_sql('xrf_981', conn, if_exists='replace')
 
+# Commits changes and closes connection
 conn.commit()
 
 conn.close()
