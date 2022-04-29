@@ -2,6 +2,9 @@
 This script will take the ugly raw data from the two SQL datasets and put them in one easy to use SQL database
 called xrf_data.db with the tables xrf_980 and xrf_981 containing the two different datasets with Si/Sr ratios, Zr/Sr
 ratios, ages relative to LR04 dataset, depth in metres composite depth, and the filename for data-search later.
+
+This code also takes in the csv files containing the IRD and d18O data and generates a separate SQL database for
+them to be stored in.
 """
 
 import pandas as pd
@@ -56,3 +59,33 @@ conn.commit()
 
 conn.close()
 
+## Now we're generating the McManus and Wright and Flower IRD record
+
+# Load the CSV files into Pandas dataframes
+first_ird = pd.read_csv("data/mcmanus_1999_ird.csv")
+second_ird = pd.read_csv("data/wright_2002_ird.csv")
+
+# Give the columns the same names
+first_ird = first_ird.rename(columns={'MCD': "depth", 'Age10 (kyr)': "age_ka", 'Lithics/gm': "ird_lithics_gm",
+                                      'IRD (%)': "ird_percent"})
+second_ird = second_ird[["depth", "age_ka", "ird_percent", "ird_lithics_gm"]]
+
+# Concatenate the columns
+ird_frame = pd.concat([first_ird, second_ird])
+
+# Remove the missing values
+ird_frame = ird_frame.dropna()
+
+connection_ird = sqlite3.connect("data/ird_data.db")
+
+# Generates the table in the new database
+c = connection_ird.cursor()
+# c.execute("DROP TABLE ird")
+c.execute("CREATE TABLE IF NOT EXISTS ird (Depth number)")
+connection_ird.commit()
+
+# Writes the new dataframes to the database
+ird_frame.to_sql('ird', connection_ird, if_exists='replace')
+connection_ird.commit()
+
+connection_ird.close()

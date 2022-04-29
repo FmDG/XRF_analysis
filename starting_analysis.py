@@ -1,3 +1,10 @@
+"""
+This code generates a number of simple graphs which are used for exploratory analysis of the data, both the XRF data
+generated and the comparative d18O and IRD data.
+
+"""
+
+
 import pandas as pd
 import sqlite3
 import matplotlib.pyplot as plt
